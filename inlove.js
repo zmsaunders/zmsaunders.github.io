@@ -1,3 +1,41 @@
+var AnimationQueue = function() {
+    this.showFramerate = false;
+    this.currentFramerate = 60;
+
+    this.animations = [];
+    this.lastRun = 0;
+    this.runAnimations();
+};
+
+AnimationQueue.prototype = {
+    addAnimation(func, fps) {
+        this.animations.push({
+            call : func,
+            fpsInt : 1000 / fps,
+            lastCall : performance.now()
+        });
+    },
+    runAnimations(activeRun) {
+        var delta = (activeRun - this.lastRun)/1000;
+        this.currentFramerate = 1/delta;
+
+        // Requeue
+        requestAnimationFrame((stamp) => {this.runAnimations(stamp)});
+
+        // Call each animation
+        for(i = 0; i < this.animations.length; i++) {
+            if (activeRun - this.animations[i].lastCall > this.animations[i].fpsInt) {
+                this.animations[i].call();
+                this.animations[i].lastCall = activeRun;
+            }
+        }
+
+        this.lastRun = activeRun;
+    }
+};
+
+window.AnimationQueue = new AnimationQueue();
+
 var heart = function(container, canvas) {
     this.canvasSelector = canvas;
     this.containerSelector = container;
@@ -32,7 +70,7 @@ heart.prototype = {
         this.canvas.height = this.height;
 
         // Build the lines
-        this.addLines(60);
+        this.addLines(80);
         this.context = this.canvas.getContext("2d");
 
         // Bind Events
@@ -64,7 +102,7 @@ heart.prototype = {
             line = {
                 x1 : (x + 2) * 120,
                 x2 : (x + 2) * 120,
-                y1 : (topPoint(x)+ 2) * 120,
+                y1 : (topPoint(x)+ 2) * 140,
                 y2 : (bottomPoint(x)+ 2) * 120,
                 weight : (x >= 0) ? ((i%2) + 1) : 1,
                 v1 : Math.random() * 2 - 1,
@@ -76,10 +114,10 @@ heart.prototype = {
                 line.y2 = line.y2 - 5;
             }
 
-            line['dx1'] = Math.random() * this.canvas.width;
-            line['dx2'] = Math.random() * this.canvas.width;
-            line['dy1'] = Math.random() * this.canvas.height;
-            line['dy2'] = Math.random() * this.canvas.height;
+            line['dx1'] = Math.random() * (this.canvas.width - 200);
+            line['dx2'] = Math.random() * (this.canvas.width - 200);
+            line['dy1'] = Math.random() * (this.canvas.height - 200);
+            line['dy2'] = Math.random() * (this.canvas.height - 200);
 
             this.lines.push(line);
         }
